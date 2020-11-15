@@ -1,3 +1,37 @@
+
+# query=dbSendQuery(ch,"SELECT * FROM app_data;")
+# ds1=dbFetch(query)
+# dbClearResult(query)
+#
+# save(ds1, file='chp_test.rda')
+# load('chp_test.rda')
+
+
+
+#
+#
+# # test=rep('Visitors', nrow(ds1))
+# md=apply(ds1, 2, infer_dtype)
+# ml=apply(ds1, 2, infer_level)
+# dic=data.frame(var=names(md), type=as.character(md), level=as.character(ml))
+
+
+# infer_dtype()
+# res=prep_var( ds1$age,  (ds1$yr),  x.multi=NULL, y.multi=NULL, x.dtype=NULL,x.levs=NULL, y.dtype='str', y.levs=NULL, n_perc=2)
+#
+# ds1$yr[ds1$yr<2017 | ds1$yr>2019 ]=NA
+#
+# oo=sapply(c(16:20, 22:23, 25:30), function(i){
+#   print(i)
+#   prep_var( ds1[,i],  ds1$yr,  x.multi=NULL, y.multi=NULL, x.dtype=NULL,x.levs=NULL, y.dtype='str', y.levs=NULL, n_perc=2)
+# })
+#
+#
+
+#.tbl_output(res, format='long')
+#cleansing:::.tbl_output_num(res, format='1row', html=T)
+#.tbl_output_x_num(res, '1row', html=T)
+
 # cont.test=function(df, cs=cs.na, n_tot, nas, type, n.min=1){
 #   #print('conti')
 #

@@ -26,8 +26,8 @@
   idx_x=(is.na(x)| is.infinite(x)| is.nan(x))
   idx_y=(is.na(y)| is.infinite(y)| is.nan(y))
 
-  x_na=length(which(idx_x))
-  y_na=length(which(idx_y))
+  x_na=length(which(idx_x & !idx_y))
+  y_na=length(which(idx_y & !idx_x))
   xy_na=length(which(idx_x & idx_y))
 
   x_na=c(x_na, x_na/n_x*100)
@@ -47,7 +47,7 @@
 .conv_dtype<-function(x, dtype=c('num', 'str', 'fac'), levs=NULL){
 
 
-  conv<-function(x){
+  .conv<-function(x, dtype){
     switch(dtype,
            'num'={as.numeric(x)},
            'fac'={
@@ -60,9 +60,9 @@
 
 
   if(is.list(x)){
-    out=lapply(x, conv)
+    out=lapply(x, function(xx) {.conv(xx, dtype)})
   }else{
-    out=conv(x)
+    out=.conv(x, dtype)
   }
 
   return(out)
@@ -99,14 +99,22 @@
 .combine_lowFreqLevels<-function(x, n=2, repl='Other', includeLevN=T){
   cs=table(x)
   idx=which(cs<(sum(cs)*(n/100)))
-  lev_repl=names(idx)
-  if(includeLevN) {
-    n=length(idx)
-    repl=paste0(repl, ' (', n, ' levels)')
+
+  if(length(idx)>0){
+    lev_repl=names(idx)
+    if(includeLevN) {
+      n=length(idx)
+      repl=paste0(repl, ' (', n, ' levels)')
+    }
+
+    lev_repl=gsub('(', '\\(', lev_repl, fixed=T)
+    lev_repl=gsub(')', '\\)', lev_repl, fixed=T)
+    x_repl=gsub(paste0('^', paste0(lev_repl, collapse='$|^'), '$'), repl, x, fixed = F)
+    return(x_repl)
+  }else{
+    return(x)
   }
 
-  x_repl=gsub(paste0('^', paste0(lev_repl, collapse='$|^'), '$'), repl, x)
-  return(x_repl)
 }
 
 #' @title Combine uni and/or multilevel variables, rm NA's
@@ -150,8 +158,7 @@
 #' @param x.multi logic, is x cleaned multi-level variable?
 #' @param y.multi logic, is y cleaned multi-level variable?
 #' @return list, 1: contingency table(x,y) and y, 2: Chi-squared p value
-.countsFreq_chiSq<-function(ds, x.multi, y.multy){
-
+.countsFreq_chiSq<-function(ds, x.multi, y.multi){
   if(y.multi & !x.multi){
     #browser()
     y_lev=unique(ds$y)
@@ -185,17 +192,17 @@
     ct=table(ds$x, ds$y)
   }
 
-  #browser()
-  if(any(ct<5 & ct!=0)) stop('low number of counts')
+  if(any(ct<5 & ct!=0)) warning('Low number of counts, p value instable')
    cs=chisq.test(ct)
    return(list(ct, cs))
 }
 
 .ct_to_perc<-function(ct){
-  ct=apply(ct, 2, function(x){
-    x/sum(x)
-  })
-
+  if(is.null(nrow(ct))){ct/sum(ct)}else{
+    ct=apply(ct, 2, function(x){
+      x/sum(x)
+    })
+  }
   ct*100
 }
 
@@ -222,7 +229,7 @@
 #' @param y cat array, segementation variable defining groups
 #' @return matrix, row 1: p value, row 2: Cliff's delta effect size
 .num_groupComp_pairwise<-function(x, y){
-  pw_combn=combn(unique(y), 2)
+  pw_combn=combn(unique(as.character(y)), 2)
   ps=apply(pw_combn, 2, function(lev){
     idx=which(y %in% lev)
     g=factor(y[idx])
@@ -328,7 +335,6 @@ es_cdelta <- function(ref, comp) {
 .to_tbl_num<-function(pv){
   nr=nrow(pv[[1]][[1]])
   nc=ncol(pv[[1]][[1]])
-  browser()
   ct_out=t(sapply(seq(nr), function(i){
     paste0(pv[[1]][[1]][i,], ' (', round(pv[[2]][i,]), '%)')
   }))
@@ -345,3 +351,235 @@ es_cdelta <- function(ref, comp) {
 
 
 }
+
+
+
+.comb_tbls<-function(abs, ct, format, html=T){
+
+  if(format=='long'){
+    abs=addmargins(abs)
+    ct=addmargins(ct)
+
+    out=sapply(seq(ncol(abs)), function(i){
+      pp=as.character(round(ct[,i]))
+      pp[pp=='0' & abs[,i]>0]='<1'
+      paste0(formatC(abs[,i], big.mark = ','),' (', pp, '%)')
+    })
+
+
+    if(is.null(nrow(out))) out=t(out)
+    colnames(out)=colnames(abs)
+    rownames(out)=rownames(abs)
+    return(out)
+  }
+  if(format=='1row'){
+
+    out=sapply(seq(nrow(abs)), function(i){
+      #if(i %% 2 == 0){oo=rep('', 1); return(oo)}else{
+        #i=1+((i-1)/2)
+        pp=as.character(round(ct[i,]))
+        pp[pp=='0' & abs[i,]>0]='<1'
+        oo=paste0(formatC(abs[i,], big.mark = ','),' (', pp, '%)')
+        oo
+      #}
+    })
+    out=c(out)
+    #names(out)=rep(c(colnames(ct), ''), nrow(ct))[1:length(out)]
+    #if(is.null(nrow(out))) out=t(out)
+    # idx_c=seq(from=1, to=ncol(out), by=2)
+    # colnames(out)[idx_c]=rownames(abs)
+    # colnames(out)[-idx_c]=""
+    # rownames(out)=colnames(abs)
+
+    olong=matrix(out, nrow=1, ncol=length(out))
+    olong=rbind(rep(colnames(ct), nrow(ct)), olong)
+    # #olong=rbind(out)
+    #
+    # add=c(sapply(seq(nrow(ct)), function(i){
+    #   add=rep('', ncol(ct)+1)
+    #   add[1]=rownames(ct)[i]
+    #   add
+    # }))
+
+    if(html==T){
+      tbl=olong
+      # html table
+      tbl[2,] %>%
+        addHtmlTableStyle(align="c",
+                          # col.columns = c(rep("none", 2),
+                          #                 rep("#F5FBFF", 4)),
+                          css.cgroup='background-color: #F5FBFF;') %>%
+
+        htmlTable(
+          header=olong[1,],
+          cgroup=rownames(ct),
+          n.cgroup=c(rep(ncol(ct), nrow(ct)))
+        ) -> ex
+
+    }else{
+      ex=rbind(add[1:ncol(olong)], olong)
+      rownames(ex)=NULL
+
+
+    }
+
+
+    return(ex)
+
+  }
+
+
+}
+
+
+
+#' @export
+.tbl_output<-function(res, format, html=T){
+
+  if(format=='long'){
+    n_tot=formatC(sum(res$counts[[1]])+sum(res$nas[1,]), big.mark = ',')
+    out<-.comb_tbls(res$counts[[1]], res$perc, format)
+    if(ncol(out)<3) {
+      add=matrix("", nrow=nrow(out), ncol=ncol(out)-3)
+      out=cbind(out, add)
+    }
+    out[,ncol(out)]=gsub(' \\(.*', '', out[,ncol(out)])
+    add<-add1<-rep("", ncol(out))
+    out<-rbind(out, " "=add)
+    add1[1]=n_tot
+    out=rbind(out, "n_total"=add1)
+    add[1]<-c(format.pval(res$counts[[2]]$p.value, 2))
+    out<-rbind(out, p.value=add)
+
+    nas<-.comb_tbls(t(t(res$nas[1,])), t(t(res$nas[2,])), format)
+    nas=c(paste(c('Var:', 'Seg:', 'Both:'), nas)[c(2,1,3)], rep('', ncol(out)-3))
+    out=rbind(out, "nas"=nas)
+    rownames(out)[nrow(out)]='NAs'
+
+
+  }
+  if(format=='1row'){
+
+    if(html){
+      out=.comb_tbls(res$counts[[1]], res$perc, format, html)
+    }else{
+      out=.comb_tbls(res$counts[[1]], res$perc, format)
+    }
+  }
+
+
+  return(out)
+
+}
+
+
+# infer num, str, logic, factor
+
+infer_dtype=function(x){
+
+  x=x[!is.na(x)]
+
+  t_num=NA
+  t_str=NA
+  t_bool=NA
+
+  n=length(x)
+  n_un=length(unique(x))
+
+  x_num=as.numeric(gsub('<|>', '', x))
+  if(length(which(is.na(x_num)))<(n*0.20) & n_un>2){t_num=T; t_str=F; t_bool}else{t_num=F}
+
+  if(n_un==2){
+    t_bool=T; t_str=F}else{t_bool=F}
+
+  if((!t_bool & !t_num) | (!t_bool & n_un<5)){
+    t_bool=F
+    t_str=T
+  }
+
+  return(c('num', 'str', 'bool')[which(c(t_num, t_str, t_bool))])
+}
+
+infer_level=function(x, oc=20){
+
+  x=x[!is.na(x)]
+
+  n=length(x)
+  n_un=length(unique(x))
+
+  seps=c(',', ';')
+  mat=sapply(seps, function(sep){
+    idx=grep(sep, x)
+    if(length(idx)<(n*(oc/100)) & length(idx)!=0){
+      if(length(unique(x[-idx]))<10){
+
+        test=unique(gsub('^ | $', '', unique(unlist(strsplit(x, sep, fixed = T)))))
+        out=all(test!='' & test %in% unique(x[-idx]))
+        return(out)
+      }else(T)
+    }else{
+      return(F)
+    }
+  })
+  if(any(mat)){
+    out=paste('Multilevel, separators:', paste(names(mat)[which(mat)], sep=' and '))
+  }else{out='Single level'}
+
+  return(out)
+
+}
+
+
+.tbl_output_x_num<-function(res, format, html=T){
+
+  x_tot=formatC(sum(c(unlist(res$nas[1,]), res$summary$n)), big.mark = ',', format='d')
+  if(format=='long'){
+    out=res$summary[,-1]
+    out$n_perc=round(as.numeric(out$n_perc), 1)
+    out$n=formatC(as.numeric(out$n), big.mark = ',', format='d')
+    add=add1=rep('', ncol(out))
+    out=rbind(out, add)
+    add[1]=x_tot
+    out=rbind(out, add)
+    add[1]=format.pval(res$stats[[1]], digits = 2)
+    out=rbind(out, add)
+    add[1]=round(res$stats[[1]], digits = 2)
+    out=rbind(out, add)
+
+    rownames(out)=c(as.character(res$summary[,1]),'','n', 'p value', 'Cd')
+
+  }
+  if(format=='1row'){
+    x_sum=apply(res$summary[,-1], 1, function(x){
+      # check if integer
+      if(all(as.integer(x[1:5])==x[1:5])) {r=0 }else{ r=2}
+      ra=round(c(x[1], x[5]), r)
+      paste(round(x[3], r), ' (', ra[1], '-', ra[2], ')', sep='')
+
+    })
+    df=as.data.frame(t(x_sum))
+    colnames(df)=res$summary[,1]
+
+    out=df
+    if(html){
+
+      tbl=df
+      rownames(tbl)=NULL
+      # html table
+      tbl %>%
+        addHtmlTableStyle(align="c",
+                          css.cell = "padding-left: .5em; padding-right: .4em;") %>%
+        htmlTable(
+          rnames=F,
+          n.cgroup=c(rep(ncol(tbl)))
+        ) -> out
+    }else{
+      out=df
+    }
+  }
+
+  return(out)
+
+}
+
+
