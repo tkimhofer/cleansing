@@ -3,26 +3,6 @@
 #' @param list of two: 1: p values semgentation levels, 2: contigency table (abs, %)
 #' @return table ready to export
 
-# idx=which(ds1$yr >=2017 & ds1$yr<=2019)
-# x=ds1$age[idx]
-# x[x<16]=NA
-# y=ds1$yr[idx]
-# x.multi=F
-# y.multi=F
-# x.dtype=NULL
-# x.levs=NULL
-# y.dtype=NULL
-# y.levs=NULL
-#
-# pv=prep_var(x, y,
-#          x.multi,
-#          y.multi,
-#          x.dtype,
-#          x.levs,
-#          y.dtype,
-#          y.levs)
-
-
 prep_var<-function(x, y, x.multi=F, y.multi=F, x.dtype=c('num', 'str', 'fac'),
                    x.levs=NULL, y.dtype=c('num', 'str', 'fac'), y.levs=NULL, n_perc=5){
 
@@ -37,8 +17,11 @@ prep_var<-function(x, y, x.multi=F, y.multi=F, x.dtype=c('num', 'str', 'fac'),
   x.ori=x
   y.ori=y
 
-  x=.clean_na(x)
-  y=.clean_na(y)
+  # x_na=.count_na(x)
+  # y_na=.count_na(y)
+
+  x=.rm_na(x)
+  y=.rm_na(y)
 
 
   if(is.null(x.multi)) x.multi=ifelse(infer_level(x)=="Single level", F, T)
