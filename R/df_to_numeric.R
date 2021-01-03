@@ -2,7 +2,7 @@
 #' @title clean data and prepare for pca
 #' @description data canversion to numeric, dummy variables for multi-level categorical vars, missing value imputation
 #' @param t1 output uf add_summary fct
-#' @param ds1 data.frame to be cleaned
+#' @param df1 data.frame to be cleaned
 #' @param imp_cutoff_perc percentage of missing values for a variable to be excluded
 #' @param un_filter_perc percentage of unique values of a categorical variable to be excluded
 #' @return data.frame of cleaned numberic variables
@@ -19,20 +19,20 @@ df_to_numeric<-function(t1, df1, imp_cutoff_perc=25, un_filter_perc=20){
   iid1=which(un_val>un_filter_perc & t2$dtype=='str')
   if(length(iid)>0){
     message('The following variabes are excluded due to a high number of unique categorical values:')
-    cat(colnames(ds1)[iid], sep='\n')
+    cat(colnames(df1)[iid], sep='\n')
   }
 
   # rm vars that are below imp_cutoff
   iid2=which(comp_val>imp_cutoff_perc)
   if(length(iid)>0){
     message('The following variabes are excluded due to a high number of missing values:')
-    cat(colnames(ds1)[iid], sep='\n')
+    cat(colnames(df1)[iid], sep='\n')
   }
 
-  iid=setdiff(seq(1:nrow(ds1)), unique(c(iid1, iid2)))
+  iid=setdiff(seq(1:nrow(df1)), unique(c(iid1, iid2)))
   summary_list=lapply(iid, function(i){
 
-    x=.conv_na(ds1[,i])
+    x=.conv_na(df1[,i])
     # missing value imputation
     idx_na=which(is.na(x))
     nas=.count_na_x(x)
