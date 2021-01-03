@@ -1,2 +1,8 @@
-# cleansing R package
-Helper functions to clean sample annotation data and to produce univariate summaries for categorical and continuous variables.
+# cleansing
+Helper functions to clean sample annotation data and to produce univariate summary for each variable.
+
+### download as R package
+```r
+remotes::install_github('tkimhofer/cleansing', ref='master')
+```
+
