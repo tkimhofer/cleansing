@@ -9,18 +9,15 @@ df_to_numeric(t1, df1, imp_cutoff_perc = 25, un_filter_perc = 20)
 \arguments{
 \item{t1}{output uf add_summary fct}
 
+\item{df1}{data.frame to be cleaned}
+
 \item{imp_cutoff_perc}{percentage of missing values for a variable to be excluded}
 
 \item{un_filter_perc}{percentage of unique values of a categorical variable to be excluded}
-
-\item{ds1}{data.frame to be cleaned}
 }
 \value{
 data.frame of cleaned numberic variables
 }
 \description{
 data canversion to numeric, dummy variables for multi-level categorical vars, missing value imputation
-}
-\examples{
- df_to_numeric(d)
 }
