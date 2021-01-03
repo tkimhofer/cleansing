@@ -773,3 +773,37 @@ tbl_summary<-function(svar, var='x'){
   return(out)
 }
 
+#' @title split multilevel variable and create dummy
+#' @description data canversion to numeric, dummy variables for multi-level categorical vars
+#' @param x var to be split and converted to dummy representation
+#' @param sep separator for strsplit function, if sep=NULL then splitting is ommited
+#' @return matrix of dummy vars
+
+.split_to_dummy<-function(x, sep=NULL){
+
+  if(!is.null(sep)){
+    x_split=strsplit(x, sep)
+
+    x_split=lapply(x_split, function(x){
+      gsub('^\\s|\\s$', '', x)
+    })
+    un=unique(unlist(x_split))
+  }else{
+    un=unique(x)
+  }
+
+  un=un[!is.na(un)]
+
+  add=sapply(un, function(lev){
+    out=rep(0, length(x))
+    out[grep(lev, x, fixed = T)]=1
+    out
+  })
+
+  # add rows with na
+  idx=which(is.na(x))
+  if(length(idx)>0) add[idx,]=NA
+
+  return(add)
+
+}

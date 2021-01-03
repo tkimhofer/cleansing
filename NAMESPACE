@@ -2,6 +2,7 @@
 
 export(.tbl_output)
 export(add_summary)
+export(df_to_numeric)
 export(prep_var)
 importFrom(htmlTable,addHtmlTableStyle)
 importFrom(htmlTable,htmlTable)
