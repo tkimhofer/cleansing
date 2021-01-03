@@ -1,2 +1,9 @@
-# cleansing
-Functions to clean data and calculate univariate summary statistics in HTML format.
+# cleansing R package
+Helper functions to clean sample annotation data and to produce univariate summary for each variable.
+
+### download
+```r
+remotes::install_github('tkimhofer/cleansing', ref='master')
+```
+
+
