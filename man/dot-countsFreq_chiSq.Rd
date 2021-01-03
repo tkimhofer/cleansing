@@ -4,7 +4,7 @@
 \alias{.countsFreq_chiSq}
 \title{Univariate stats for a categorical variable}
 \usage{
-.countsFreq_chiSq(ds, x.multi, y.multy)
+.countsFreq_chiSq(ds, x.multi, y.multi)
 }
 \arguments{
 \item{ds}{data.frame, categorical variable and segmentation variable}

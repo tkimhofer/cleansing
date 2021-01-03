@@ -12,7 +12,8 @@ prep_var(
   x.dtype = c("num", "str", "fac"),
   x.levs = NULL,
   y.dtype = c("num", "str", "fac"),
-  y.levs = NULL
+  y.levs = NULL,
+  n_perc = 5
 )
 
 prep_var(
@@ -23,7 +24,8 @@ prep_var(
   x.dtype = c("num", "str", "fac"),
   x.levs = NULL,
   y.dtype = c("num", "str", "fac"),
-  y.levs = NULL
+  y.levs = NULL,
+  n_perc = 5
 )
 }
 \arguments{

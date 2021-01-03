@@ -357,9 +357,8 @@ es_cdelta <- function(ref, comp) {
   return(out)
 }
 
-
+#' @import plyr
 .num_descrStats_xy<-function(x, y){
-  require(plyr)
   ct=table(y)
   ctp=(ct/sum(ct))*100
 

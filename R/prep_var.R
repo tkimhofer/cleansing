@@ -75,14 +75,3 @@ prep_var<-function(x, y, x.multi=F, y.multi=F, x.dtype=c('num', 'str', 'fac'),
     return(list( nas=nas, stats=res, summary=res_descr, p_values_cd=res_pairwise))
   }
 }
-
-
-
-
-
-
-
-
-
-
-

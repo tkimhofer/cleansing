@@ -4,7 +4,7 @@
 \alias{.conv_dtype}
 \title{Variable class conversion}
 \usage{
-.conv_dtype(x, dtype = c("num", "str", "fac"), levs = NULL)
+.conv_dtype(x, dtype = c("num", "str", "fac", "bool"), levs = NULL)
 }
 \arguments{
 \item{x}{variable to be converted}
