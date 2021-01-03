@@ -2,7 +2,7 @@
 
 
 # cleansing
-Helper functions to clean sample annotation data and to produce univariate summary for each variable.
+Helper functions to clean sample annotation data and to produce basic summary stats for each variable.
 
 ### download as R package
 ```r
