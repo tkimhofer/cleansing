@@ -114,7 +114,6 @@
 }
 
 # create table from summary statistics from x, one column per variable, multiple rows
-
 tbl_summary<-function(svar, var='x'){
 
   #browser()
@@ -134,7 +133,7 @@ tbl_summary<-function(svar, var='x'){
   return(out)
 }
 
-
+#' @export
 add_summary<-function(ds1){
   summary_list=lapply(1:ncol(ds1), function(i){
     s=.summary_var(ds1[,i])

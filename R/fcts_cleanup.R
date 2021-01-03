@@ -357,7 +357,6 @@ es_cdelta <- function(ref, comp) {
   return(out)
 }
 
-#' @import plyr
 .num_descrStats_xy<-function(x, y){
   ct=table(y)
   ctp=(ct/sum(ct))*100
@@ -550,11 +549,11 @@ es_cdelta <- function(ref, comp) {
 
 
 #' @title infer variable data type
-#' @parameter x variable of interest
-#' @parameter n_un_lim number of unique values in x to define numeric (see details)
-#' @parameter n_un_perc_lim fraction of unique values in x to define numeric (see details)
+#' @param x variable of interest
+#' @param n_un_lim number of unique values in x to define numeric (see details)
+#' @param n_un_perc_lim fraction of unique values in x to define numeric (see details)
 #' @details dtype inferred is one of num, str, logic, x should be free of na or non-informative values (see fct .rm_na). Parameters n_un_lim and n_un_frac_lim define absolute and fraction of unique values, respectively, to define x as numeric. This is to exclude categorical values from being defined as numeric (e.g., x levels of low medium high).
-#' @output data type as string
+#' @return data type as string
 infer_dtype=function(x, gsub_pattern='<|>', n_un_lim=5, n_un_perc_lim=10){
   #browser()
   t_num=NA
@@ -600,12 +599,12 @@ infer_dtype=function(x, gsub_pattern='<|>', n_un_lim=5, n_un_perc_lim=10){
 
 
 #' @title infer if variable is of type multi-response
-#' @parameter split_cutoff cut-off in percent for minimal entries with multi-responses
-#' @parameter n length of x
-#' @parameter n_un length unique values of x
-#' @parameter sep separators
+#' @param split_cutoff cut-off in percent for minimal entries with multi-responses
+#' @param n length of x
+#' @param n_un length unique values of x
+#' @param sep separators
 #' @details Multi-response variables defined as strings with where multiple values are separated with comma, semicolon or any other alpha-numeric value indicated in sep argument
-#' @output list of possible separators
+#' @return list of possible separators
 infer_level=function(x, split_cutoff=20, n_un, sep=c(',', ';')){
 
 #browser()
