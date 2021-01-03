@@ -7,7 +7,9 @@
 .count_na(x, y)
 }
 \arguments{
-\item{x}{variable for stratification}
+\item{x}{variable for summary statistic}
+
+\item{y}{variable for stratification}
 }
 \value{
 df counting NA, abs, %

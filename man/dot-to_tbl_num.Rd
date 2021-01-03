@@ -7,7 +7,7 @@
 .to_tbl_num(pv)
 }
 \arguments{
-\item{list}{of two: 1: p values semgentation levels, 2: quantiles for segm. levels}
+\item{pv}{percentage contingency value}
 }
 \value{
 table ready to export

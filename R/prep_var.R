@@ -1,6 +1,15 @@
 #' @export
-#' @title Summaris variable dependent on stratification level
-#' @param list of two: 1: p values semgentation levels, 2: contigency table (abs, %)
+#' @title Variable summary on stratification level
+#' @description Variable summary on stratification level
+#' @param x variable for summary stats
+#' @param y stratification variable
+#' @param x.multi logic, indicating if x is mult-response variable variable to be cleaned
+#' @param y.multi logic, indicating if y is mult-response variable variable to be cleaned
+#' @param x.dtype data type of x ('num', 'str', 'fac', logic)
+#' @param y.dtype data type of y ('num', 'str', 'fac', logic)
+#' @param x.levs levels of x in case x is factor
+#' @param y.levs levels of y in case y is factor
+#' @param n_perc frequency cutoff in percentage to combine categorical levels into class 'other'
 #' @return table ready to export
 
 prep_var<-function(x, y, x.multi=F, y.multi=F, x.dtype=c('num', 'str', 'fac'),
@@ -16,10 +25,6 @@ prep_var<-function(x, y, x.multi=F, y.multi=F, x.dtype=c('num', 'str', 'fac'),
 
   x.ori=x
   y.ori=y
-
-  # x_na=.count_na(x)
-  # y_na=.count_na(y)
-
   x=.rm_na(x)
   y=.rm_na(y)
 

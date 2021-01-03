@@ -1,27 +1,24 @@
-
-#' @title remove all na values
-#' @param x variable to be cleaned
-#' @return number of non-informative values
-.rm_na<-function(x, y){
-
-  x[which(!is.na(x))]
-}
-
-#' @title Set non-informative values to NA
+#' Set non-informative values to NA
 #' @param x variable to be cleaned
 #' @return variable with values such as "na" set to NA
-#' @details Replaced with NA are strings: NA, nan, inf, "NA", "NAN", "null"
+#' @details Replaced strings: NA, nan, inf, "NA", "NAN", "null" with NA
 .conv_na<-function(x){
   # remove leading and traling whitespaces
   x=gsub('^ | $', '',  x)
   # clean NA
-  #browser()
   gsub('^na$|^null$|^nan$|^inf$|^null$|^NA$|^\\s*$|^$', NA, x, ignore.case = T)
+}
+
+#' Remove all na values
+#' @param x variable to be cleaned
+#' @return number of non-informative values
+.rm_na<-function(x){
+  x[which(!is.na(x))]
 }
 
 #' @title Counting the number of NA
 #' @param x variable for summary statistic
-#' @param x variable for stratification
+#' @param y variable for stratification
 #' @return df counting NA, abs, %
 .count_na<-function(x, y){
   # x is variable to be summaryised
@@ -134,7 +131,6 @@
   ids=unlist(sapply(seq(x_split), function(i){
     rep(i,  length(x_split[[i]]))
   }))
-  #browser()
   out=data.frame(id=ids, val=unlist(x_split))
 
   return(out)
@@ -172,8 +168,6 @@
 #' @param y array, categorical or numeric variable to be merged with x
 #' @return list, 1: merged x and y, 2: indices of NA in x or y
 .comb_xy<-function(x, y){
-  #if(length(x)!=length(y)) {stop('unequal x and y length')}
-#browser()
   if(is.atomic(x) & is.atomic(y)){
     out=data.frame(x=x, y=y, id=seq_along(along.with=x))
   }
@@ -189,8 +183,6 @@
   if(is.data.frame(y) & is.data.frame(x)){
     browser()
   }
-
-  #colnames(out)=c('id', 'x', 'y', )
   return(out)
 }
 
@@ -200,9 +192,9 @@
 #' @param x.multi logic, is x cleaned multi-level variable?
 #' @param y.multi logic, is y cleaned multi-level variable?
 #' @return list, 1: contingency table(x,y) and y, 2: Chi-squared p value
+#' @importFrom stats chisq.test
 .countsFreq_chiSq<-function(ds, x.multi, y.multi){
   if(y.multi & !x.multi){
-    #browser()
     y_lev=unique(ds$y)
     ds_uni=unique(ds[, colnames(ds) %in% c('x', 'ids')])
     ds_uni$y=F
@@ -211,7 +203,6 @@
     ct=sapply(y_lev, function(lev, ds_u=ds_uni){
       idc=ds$ids[which(ds$y==lev)]
       ds_u$y[ds_u$ids %in% idc]=T
-      #ds_u
       table(x=ds_u$x, seg=ds_u$y)[,1]
     })
   }
@@ -225,7 +216,6 @@
     ct=sapply(x_lev, function(lev, ds_u=ds_uni){
       idc=ds$ids[which(ds$x==lev)]
       ds_u$x[ds_u$ids %in% idc]=T
-      #ds_u
       table(x=ds_u$x, seg=ds_u$y)[1,]
     })
   }
@@ -254,6 +244,8 @@
 #' @param y cat array, segementation variable defining groups
 #' @return list, 1: p value for comparing all groups and y, 2: contingency table y
 #' @details Pariwise group comparison is performed with fct .num_groupComp_pariwise
+#' @importFrom stats kruskal.test
+#' @importFrom utils combn
 .num_groupComp<-function(x, y){
   ct=table(y)
   ctp=(ct/sum(ct))*100
@@ -270,6 +262,7 @@
 #' @param x num array, variable for group comparison
 #' @param y cat array, segementation variable defining groups
 #' @return matrix, row 1: p value, row 2: Cliff's delta effect size
+#' @importFrom stats kruskal.test
 .num_groupComp_pairwise<-function(x, y){
   pw_combn=combn(unique(as.character(y)), 2)
   ps=apply(pw_combn, 2, function(lev){
@@ -326,8 +319,7 @@ es_cdelta <- function(ref, comp) {
 
 
 #' @title Descriptive stats for a numeric variable startified by second variable
-#' @param x num array, numeric variable
-#' @param y cat array, segementation variable
+#' @param out list generated with .summary_var
 #' @return array of quantiles (range, IQR point estimates, median), length and %total for each segmentation level
 .descrStats_x<-function(out){
 
@@ -357,6 +349,9 @@ es_cdelta <- function(ref, comp) {
   return(out)
 }
 
+
+#' @importFrom plyr ddply
+#' @importFrom stats quantile
 .num_descrStats_xy<-function(x, y){
   ct=table(y)
   ctp=(ct/sum(ct))*100
@@ -379,33 +374,32 @@ es_cdelta <- function(ref, comp) {
 
 
 
-
-#' @title Create table of abs and rel frequencies (%) for categorical variables
-#' @param list of two: 1: p values semgentation levels, 2: contigency table (abs, %)
-#' @return table ready to export
-.to_tbl_cat<-function(pv){
-  nr=nrow(pv[[1]][[1]])
-  nc=ncol(pv[[1]][[1]])
-  ct_out=t(sapply(seq(nr), function(i){
-    paste0(pv[[1]][[1]][i,], ' (', round(pv[[2]][i,]), '%)')
-  }))
-
-  colnames(ct_out)=colnames(pv[[2]])
-
-  ct_out=data.frame(id=rownames(pv[[2]]), ct_out)
-  add=rbind(rep("", nc+1), rep("", nc+1), rep("", nc+1))
-  add[2,1]='p value'
-  add[3,1]=format.pval(pv[[1]][[2]]$p.value, digits = 2)
-  colnames(add)=colnames(ct_out)
-
-  rbind(ct_out, add)
-
-
-}
+#  Create table of abs and rel frequencies (%) for categorical variables
+#  list of two: 1: p values semgentation levels, 2: contigency table (abs, %)
+#  table ready to export
+# .to_tbl_cat<-function(pv){
+#   nr=nrow(pv[[1]][[1]])
+#   nc=ncol(pv[[1]][[1]])
+#   ct_out=t(sapply(seq(nr), function(i){
+#     paste0(pv[[1]][[1]][i,], ' (', round(pv[[2]][i,]), '%)')
+#   }))
+#
+#   colnames(ct_out)=colnames(pv[[2]])
+#
+#   ct_out=data.frame(id=rownames(pv[[2]]), ct_out)
+#   add=rbind(rep("", nc+1), rep("", nc+1), rep("", nc+1))
+#   add[2,1]='p value'
+#   add[3,1]=format.pval(pv[[1]][[2]]$p.value, digits = 2)
+#   colnames(add)=colnames(ct_out)
+#
+#   return(rbind(ct_out, add))
+#
+#
+# }
 
 
 #' @title Create table of summary stats for continuous variables
-#' @param list of two: 1: p values semgentation levels, 2: quantiles for segm. levels
+#' @param pv percentage contingency value
 #' @return table ready to export
 .to_tbl_num<-function(pv){
   nr=nrow(pv[[1]][[1]])
@@ -428,7 +422,8 @@ es_cdelta <- function(ref, comp) {
 }
 
 
-
+#' @importFrom stats addmargins
+#' @importFrom htmlTable addHtmlTableStyle htmlTable
 .comb_tbls<-function(abs, ct, format, html=T){
 
   if(format=='long'){
@@ -450,31 +445,16 @@ es_cdelta <- function(ref, comp) {
   if(format=='1row'){
 
     out=sapply(seq(nrow(abs)), function(i){
-      #if(i %% 2 == 0){oo=rep('', 1); return(oo)}else{
-        #i=1+((i-1)/2)
         pp=as.character(round(ct[i,]))
         pp[pp=='0' & abs[i,]>0]='<1'
         oo=paste0(formatC(abs[i,], big.mark = ','),' (', pp, '%)')
         oo
-      #}
     })
     out=c(out)
-    #names(out)=rep(c(colnames(ct), ''), nrow(ct))[1:length(out)]
-    #if(is.null(nrow(out))) out=t(out)
-    # idx_c=seq(from=1, to=ncol(out), by=2)
-    # colnames(out)[idx_c]=rownames(abs)
-    # colnames(out)[-idx_c]=""
-    # rownames(out)=colnames(abs)
 
     olong=matrix(out, nrow=1, ncol=length(out))
     olong=rbind(rep(colnames(ct), nrow(ct)), olong)
-    # #olong=rbind(out)
-    #
-    # add=c(sapply(seq(nrow(ct)), function(i){
-    #   add=rep('', ncol(ct)+1)
-    #   add[1]=rownames(ct)[i]
-    #   add
-    # }))
+
 
     if(html==T){
       tbl=olong
@@ -550,12 +530,12 @@ es_cdelta <- function(ref, comp) {
 
 #' @title infer variable data type
 #' @param x variable of interest
+#' @param gsub_pattern regex for str to remove (e.g., '<|>')
 #' @param n_un_lim number of unique values in x to define numeric (see details)
 #' @param n_un_perc_lim fraction of unique values in x to define numeric (see details)
 #' @details dtype inferred is one of num, str, logic, x should be free of na or non-informative values (see fct .rm_na). Parameters n_un_lim and n_un_frac_lim define absolute and fraction of unique values, respectively, to define x as numeric. This is to exclude categorical values from being defined as numeric (e.g., x levels of low medium high).
 #' @return data type as string
 infer_dtype=function(x, gsub_pattern='<|>', n_un_lim=5, n_un_perc_lim=10){
-  #browser()
   t_num=NA
   t_str=NA
   t_bool=NA
@@ -583,10 +563,6 @@ infer_dtype=function(x, gsub_pattern='<|>', n_un_lim=5, n_un_perc_lim=10){
     dtype_taken=dtype
   }
 
-  # if((!t_bool & !t_num) | (!t_bool & n_un<5)){
-  #   t_bool=F
-  #   t_str=T
-  # }
   out=list(dtypes=dtype,
            dtype_inferred=dtype_taken,
            x_le=x_le, # this is not adjusted for multiple responses
@@ -600,7 +576,7 @@ infer_dtype=function(x, gsub_pattern='<|>', n_un_lim=5, n_un_perc_lim=10){
 
 #' @title infer if variable is of type multi-response
 #' @param split_cutoff cut-off in percent for minimal entries with multi-responses
-#' @param n length of x
+#' @param x variable to be cleaned
 #' @param n_un length unique values of x
 #' @param sep separators
 #' @details Multi-response variables defined as strings with where multiple values are separated with comma, semicolon or any other alpha-numeric value indicated in sep argument
@@ -618,9 +594,6 @@ infer_level=function(x, split_cutoff=20, n_un, sep=c(',', ';')){
 
   out=list(tested_sep=mat)
 
-
-  #idx=which(!is.nan(mat) && mat>split_cutoff)
-  #browser()
   if(any(mat>split_cutoff)){
     idx=which.max(mat)
     out$sep_inferred=names(mat[idx])
@@ -684,4 +657,119 @@ infer_level=function(x, split_cutoff=20, n_un, sep=c(',', ';')){
 
 }
 
+.summary_var_xy<-function(x, y=NULL){
+
+  if(is.null(y)){
+    y=rep('All', length(x))
+    y.multi=F
+    y.dtype='fac'
+  }
+
+
+  x.ori=x
+  y.ori=y
+
+  # x_na=.count_na(x)
+  # y_na=.count_na(y)
+
+  x=.conv_na(x)
+  y=.conv_na(y)
+
+  nas=.count_na(x, y)
+  x_na_rm=x[nas$idx_x]
+  y_na_rm=y[nas$idx_y]
+  xy_na_rm=x[nas$idx_xORy]
+
+  le_xy=length(x_na_rm)
+  un_le_x=length(unique(x_na_rm))
+  un_le_y=length(unique(y_na_rm))
+
+  ml_x=infer_level(x_na_rm, split_cutoff = 20,  n_un = un_le_x)
+  ml_y=infer_level(y_na_rm, split_cutoff = 20,  n_un = un_le_y)
+
+  if(ml_x$multiresponse){
+    x_na_rm=.split_multiresp_df(x_na_rm, sep=ml_x$sep_inferred)
+
+  }
+  if(ml_y$multiresponse){
+    y_na_rm=.split_multiresp_df(y_na_rm, sep=ml_y$sep_inferred)
+  }
+
+  # combine x and y
+  xy_df=.comb_xy(x_na_rm, y_na_rm)
+
+
+  x_dtype=infer_dtype(xy_df$x)
+  y_dtype=infer_dtype(xy_df$y)
+
+  out=list(
+
+    nas=nas$summary,
+    x=x_dtype,
+    y=y_dtype,
+    avg_resp=round(nrow(xy_df)/le_xy),
+    le_id_noNA=length(unique(xy_df$id)),
+    x_ml=c(ml_x$multiresponse, ml_x$sep_inferred),
+    y_ml=c(ml_y$multiresponse, ml_y$sep_inferred)
+  )
+  return(out)
+}
+
+#' @importFrom stats median
+.summary_var<-function(x){
+
+  x.ori=x
+  x=.conv_na(x)
+  nas=.count_na_x(x)
+
+  x_na_rm=x[nas$idx_x]
+  ml_x=infer_level(x_na_rm, split_cutoff = 20,  n_un = length(unique(x_na_rm)))
+
+  # different ways to combine ml variable
+  # x is unilevel, y is multilevel: what is age distribution for visitors answering with level x
+  # x is multilevel, y is unilevel: testing motivation responses for HIV test previously
+  # x and y are multilevel:
+  # the statistics should be done on individual level, since thge absolute number or responses does not reflect visitor numbers after separating multi-responses...owing to the fact that two individuals can provide different number of responses
+
+  if(ml_x$multiresponse){
+    x_na_rm=.split_multiresp_df(x_na_rm, sep=ml_x$sep_inferred)
+  }else{
+    x_na_rm=data.frame(id=seq_along(x_na_rm), val=x_na_rm, stringsAsFactors = F)
+  }
+  x_dtype=infer_dtype(x_na_rm$val)
+
+  x_na_rm$val=.conv_dtype(x_na_rm$val, dtype = x_dtype$dtype_inferred)
+
+
+  out=list(
+    nas=nas$summary,
+    x=x_dtype,
+    avg_resp=round(x_dtype$x_le/nas$summary$x_val[1],1),
+    le_id_noNA=nas$summary$x_val[1],
+    x_ml=c(ml_x$multiresponse, ml_x$sep_inferred),
+    x_na_rm=x_na_rm
+  )
+
+  dst=.descrStats_x(out)
+  out$dst=dst
+
+  return(out)
+}
+
+# create table from summary statistics from x, one column per variable, multiple rows
+tbl_summary<-function(svar, var='x'){
+
+  n=format(svar$nas$x_n[1], big.mark = ',')
+  cmp_p=round(svar$nas$x_val[2], 1)
+  complt_perc=paste0(ifelse({cmp_p==100 & (svar$nas$x_val[2]<100)}, '>99' ,cmp_p), '%')
+  un_p=round(svar$x$n_un_perc, 1)*100
+  un_perc=paste0(ifelse({un_p==0 & (svar$x$n_un_perc>0)}, '<1' ,un_p), '%')
+
+  if(svar$x_ml[1]){
+    dtype=paste('str ML ', "(sep=\"", svar$x_ml[2], "\")", sep="")
+  }else{dtype=svar$x$dtype_inferred}
+
+  out=matrix(c(n, dtype, complt_perc, un_perc, svar$avg_resp, svar$dst[[1]]), ncol=1)
+  return(out)
+}
 

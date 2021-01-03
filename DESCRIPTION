@@ -6,8 +6,8 @@ Author: Torben Kimhofer
 Maintainer: Torben Kimhofer <tkimhofer@gmail.com>
 Description: Data cleaning is time consuming and in most cases, isn't fun at all! This package contains functions to semi-automate variable cleaning (e.g., data type conversions, NA removal, stratification of multi-level variables), as well as to generate summary statistics that give an overview of variables, missing values, etc. 
     Use four spaces when indenting paragraphs within the Description.
-License: MIT+License file
-Import: plyr
+License: MIT+LICENSE file
+Depends: htmlTable, plyr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
