@@ -251,7 +251,7 @@
   ctp=(ct/sum(ct))*100
   if(any(ct<5)) stop('low number of counts')
   if(any(ctp<15)) warning('unequal group sizes, p value instable')
-  if(length(ct)==1) stop('no segmantation level')
+  if(length(ct)==1) stop('no segmentation level')
     p=kruskal.test(x, factor(y))$p.value
     # could do pairwise effect sizes here
     return(list(p, ctp))
@@ -369,6 +369,15 @@ es_cdelta <- function(ref, comp) {
   # could do pairwise effect sizes here
 }
 
+
+
+.num_descrStats_x<-function(x){
+
+  n=length(x)
+  quants=quantile(x, probs=c(0, 0.25, 0.5, 0.75, 1))
+  return(quants)
+  # could do pairwise effect sizes here
+}
 
 
 
